@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HP Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'VT323', monospace;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        h1, h2 {
+            color: #00ff00;
+            text-align: center;
+            text-shadow: 2px 2px 0px #111;
+            margin: 10px 0;
+        }
+        .container {
+            max-width: 360px;
+            margin: auto;
+            background-color: #111;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #222;
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #444;
+            text-align: left;
+        }
+        th {
+            background-color: #333;
+            color: #00ff00;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #444;
+        }
+        button, input[type=text] {
+            font-family: 'VT323', monospace;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 2px solid #00ff00;
+            background-color: #000;
+            color: #00ff00;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        button:hover, input[type=text]:focus {
+            background-color: #00ff00;
+            color: #000;
+        }
+        .actions button {
+            width: 45%;
+            margin: 5px 2.5%;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>HP Manager</h1>
+        <h2>Tambah / Update Data</h2>
+        <input type="hidden" id="hpId">
+        <input type="text" id="merek" placeholder="Merek HP">
+        <input type="text" id="tipe" placeholder="Tipe">
+        <input type="text" id="ram" placeholder="RAM">
+        <input type="text" id="rom" placeholder="ROM">
+        <input type="text" id="prosesor" placeholder="Prosesor">
+        <button onclick="addOrUpdateHP()">Simpan</button>
+
+        <h2>Daftar HP</h2>
+        <table id="hpTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Merek</th>
+                    <th>Tipe</th>
+                    <th>RAM</th>
+                    <th>ROM</th>
+                    <th>Prosesor</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/hp';
+
+        async function loadHP() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            const tbody = document.querySelector('#hpTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(hp => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${hp.id}</td>
+                        <td>${hp.merek_hp}</td>
+                        <td>${hp.tipe}</td>
+                        <td>${hp.ram}</td>
+                        <td>${hp.rom}</td>
+                        <td>${hp.prosesor}</td>
+                        <td class="actions">
+                            <button onclick='editHP(${JSON.stringify(hp)})'>Edit</button>
+                            <button onclick='deleteHP(${hp.id})'>Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function editHP(hp) {
+            document.getElementById('hpId').value = hp.id;
+            document.getElementById('merek').value = hp.merek_hp;
+            document.getElementById('tipe').value = hp.tipe;
+            document.getElementById('ram').value = hp.ram;
+            document.getElementById('rom').value = hp.rom;
+            document.getElementById('prosesor').value = hp.prosesor;
+            const button = document.querySelector("button[onclick='addOrUpdateHP()']");
+            button.textContent = "Update Data";
+            button.style.backgroundColor = "#ffae00";
+        }
+
+        async function addOrUpdateHP() {
+            const id = document.getElementById('hpId').value;
+            const hpData = {
+                merek_hp: document.getElementById('merek').value,
+                tipe: document.getElementById('tipe').value,
+                ram: document.getElementById('ram').value,
+                rom: document.getElementById('rom').value,
+                prosesor: document.getElementById('prosesor').value
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API_URL}/${id}` : API_URL;
+            await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(hpData)
+            });
+            document.getElementById('hpId').value = '';
+            document.getElementById('merek').value = '';
+            document.getElementById('tipe').value = '';
+            document.getElementById('ram').value = '';
+            document.getElementById('rom').value = '';
+            document.getElementById('prosesor').value = '';
+            const button = document.querySelector("button[onclick='addOrUpdateHP()']");
+            button.textContent = "Simpan";
+            button.style.backgroundColor = "#000";
+            loadHP();
+        }
+
+        async function deleteHP(id) {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            loadHP();
+        }
+
+        loadHP();
+    </script>
+</body>
+
+</html>
